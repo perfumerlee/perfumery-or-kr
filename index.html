@@ -2,15 +2,15 @@
 <html lang="ko">
 <head>
   <!--
-    PERFUMERY.OR.KR v0.05
-    한국어 조향 원료 라이브러리 공개 초안 / 500개 기본 데이터셋
-    목적: 비영리 정보 아카이브 / index.html + materials.json 데이터 분리 구조
+    PERFUMERY.OR.KR v0.06
+    한국어 조향 원료 라이브러리 공개 초안 / 1,000개 기본 데이터셋
+    목적: 비영리 정보 아카이브 / index.html + assets/materials.json 데이터 분리 구조
     기준일: 2026-06-18
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PERFUMERY.OR.KR — 한국어 조향 원료 라이브러리 v0.05</title>
-  <meta name="description" content="향수 원료의 기본 식별 정보와 향취 계열을 한국어로 정리하는 비영리 공개 정보 아카이브 초안입니다. 원료 데이터는 materials.json으로 분리했으며, v0.05에서 500개 기본 원료 데이터셋을 적용했습니다." />
+  <title>PERFUMERY.OR.KR — 한국어 조향 원료 라이브러리 v0.06</title>
+  <meta name="description" content="향수 원료의 기본 식별 정보와 향취 계열을 한국어로 정리하는 비영리 공개 정보 아카이브 초안입니다. 원료 데이터는 assets/materials.json으로 분리했으며, v0.06에서 1,000개 기본 원료 데이터셋을 적용했습니다." />
   <style>
     :root {
       --bg: #f7f3ea;
@@ -933,7 +933,7 @@
         <span class="brand-mark">P</span>
         <span class="brand-title">
           <strong>PERFUMERY.OR.KR</strong>
-          <span>한국어 조향 원료 라이브러리 v0.05</span>
+          <span>한국어 조향 원료 라이브러리 v0.06</span>
         </span>
       </a>
       <div class="nav-links">
@@ -963,14 +963,14 @@
 
         <aside class="hero-card" aria-label="사이트 요약">
           <div>
-            <div class="index-card-title">v0.05 scope</div>
+            <div class="index-card-title">v0.06 scope</div>
             <div class="hero-stats">
               <div class="stat">
                 <strong id="statMaterials">-</strong>
-                <span>CAS 보강 원료 카드</span>
+                <span>등록 원료 카드</span>
               </div>
               <div class="stat">
-                <strong>20+</strong>
+                <strong>30+</strong>
                 <span>향취 계열 필터</span>
               </div>
               <div class="stat">
@@ -985,7 +985,7 @@
           </div>
           <div class="note-box">
             <p>
-              이 초안은 index.html과 materials.json을 분리한 공개용 버전입니다. 원료 데이터는 JSON에서 관리하고, 화면·스타일·기능은 index.html에서 관리합니다.
+              이 초안은 index.html과 assets/materials.json을 분리한 공개용 버전입니다. 원료 데이터는 assets/materials.json에서 관리하고, 화면·스타일·기능은 index.html에서 관리합니다.
             </p>
           </div>
         </aside>
@@ -1032,10 +1032,11 @@
         </div>
 
         <div id="libraryStatus" class="library-status" role="status">
-          <strong>materials.json</strong> 파일을 같은 폴더에서 불러옵니다. 서버에 올릴 때는 index.html과 materials.json을 같은 경로에 두세요.
+          <strong>assets/materials.json</strong> 파일을 불러옵니다. 서버에 올릴 때는 index.html 옆에 assets 폴더를 만들고 그 안에 materials.json을 두세요.
         </div>
 
         <div id="cards" class="cards"></div>
+        <div class="load-more-wrap"><button id="loadMoreBtn" class="load-more-btn" type="button" hidden>더 보기</button></div>
         <div id="emptyState" class="empty-state">
           <strong>검색 결과가 없습니다.</strong><br />다른 원료명, 향취, 역할 키워드로 검색해보세요.
         </div>
@@ -1078,7 +1079,7 @@
         <div class="section-head">
           <div>
             <h2>조향 용어사전</h2>
-            <p class="section-desc">원료 상세 페이지와 연결될 기초 용어입니다. v0.05에서는 500개 원료 기본 데이터셋을 적용하고, CAS 검증 상태를 데이터에서 분리 관리합니다.</p>
+            <p class="section-desc">원료 상세 페이지와 연결될 기초 용어입니다. v0.06에서는 1,000개 원료 기본 데이터셋을 적용하고, CAS 검증 상태를 데이터에서 분리 관리합니다.</p>
           </div>
         </div>
         <div class="glossary">
@@ -1143,8 +1144,8 @@
     <div class="wrap footer-grid">
       <div>
         <strong>PERFUMERY.OR.KR</strong><br />
-        한국어 조향 원료 라이브러리 v0.05<br />
-        본 자료는 교육과 참고 목적의 비영리 정보 아카이브 초안입니다. v0.05는 index.html과 materials.json을 분리하고 500개 원료 기본 데이터셋을 적용한 구조이며, 실제 제조와 판매 전에는 최신 IFRA, SDS, 알러젠, 관련 법규를 반드시 확인해야 합니다.
+        한국어 조향 원료 라이브러리 v0.06<br />
+        본 자료는 교육과 참고 목적의 비영리 정보 아카이브 초안입니다. v0.06은 index.html과 assets/materials.json을 분리하고 1,000개 원료 기본 데이터셋을 적용한 구조이며, 실제 제조와 판매 전에는 최신 IFRA, SDS, 알러젠, 관련 법규를 반드시 확인해야 합니다.
       </div>
       <div class="footer-links">
         <a href="#library">원료 라이브러리</a>
@@ -1172,14 +1173,18 @@
   <script>
     let MATERIALS = [];
     let MATERIALS_META = {};
-
+    const DATA_URL = "assets/materials.json";
+    const INITIAL_VISIBLE_LIMIT = 120;
+    const LOAD_MORE_STEP = 120;
+    let searchTimer = null;
 
     const FAMILY_ORDER = ["Citrus", "Floral", "Woody", "Musk", "Amber", "Green", "Powdery", "Fruity", "Fresh", "Herbal", "Aldehydic", "Gourmand", "Lactonic", "Marine", "Watery", "Ozonic", "Resinous", "Balsamic", "Spicy", "Mossy", "Tobacco", "Leather", "Animalic", "Earthy", "Solar", "Clean", "Transparent", "Tea", "Pine", "Sweet"];
 
     const state = {
       query: "",
       family: "all",
-      note: "all"
+      note: "all",
+      visibleLimit: INITIAL_VISIBLE_LIMIT
     };
 
     const cardsEl = document.getElementById("cards");
@@ -1191,6 +1196,7 @@
     const noteSelect = document.getElementById("noteSelect");
     const chipArea = document.getElementById("chipArea");
     const statMaterials = document.getElementById("statMaterials");
+    const loadMoreBtn = document.getElementById("loadMoreBtn");
 
     const modal = document.getElementById("modal");
     const modalTitle = document.getElementById("modalTitle");
@@ -1223,18 +1229,7 @@
 
     function matchesQuery(item, query) {
       if (!query) return true;
-      const haystack = normalize([
-        item.name,
-        item.koreanName,
-        item.cas,
-        item.type.join(" "),
-        item.family.join(" "),
-        item.notePosition.join(" "),
-        item.odorKeywords.join(" "),
-        item.role.join(" "),
-        item.summary,
-        item.caution
-      ].join(" "));
+      const haystack = item._searchText || "";
       return normalize(query).split(" ").every(part => haystack.includes(part));
     }
 
@@ -1262,13 +1257,8 @@
       }).join("");
     }
 
-    function renderCards() {
-      const items = filteredMaterials();
-      countEl.textContent = `${items.length}개의 원료가 표시됩니다.`;
-      statMaterials.textContent = MATERIALS.length;
-      emptyEl.style.display = items.length ? "none" : "block";
-
-      cardsEl.innerHTML = items.map(item => `
+    function materialCardTemplate(item) {
+      return `
         <article class="material-card" data-id="${escapeHtml(item.id)}" tabindex="0" role="button" aria-label="${escapeHtml(item.name)} 상세보기">
           <div class="card-top">
             <h3>${escapeHtml(item.name)}<span class="ko-name">${escapeHtml(item.koreanName)}</span></h3>
@@ -1287,7 +1277,19 @@
             <span class="small-muted">${escapeHtml(item.strength)} strength</span>
           </div>
         </article>
-      `).join("");
+      `;
+    }
+
+    function renderCards() {
+      const items = filteredMaterials();
+      const visibleItems = items.slice(0, state.visibleLimit);
+      countEl.textContent = `${items.length}개 검색 결과 중 ${visibleItems.length}개가 표시됩니다.`;
+      statMaterials.textContent = MATERIALS.length;
+      emptyEl.style.display = items.length ? "none" : "block";
+      loadMoreBtn.hidden = visibleItems.length >= items.length;
+      loadMoreBtn.textContent = `더 보기 (${items.length - visibleItems.length}개 남음)`;
+
+      cardsEl.innerHTML = visibleItems.map(materialCardTemplate).join("");
     }
 
     function detailList(rows) {
@@ -1365,17 +1367,21 @@
 
     searchInput.addEventListener("input", event => {
       state.query = event.target.value;
-      renderCards();
+      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(renderCards, 80);
     });
 
     familySelect.addEventListener("change", event => {
       state.family = event.target.value;
+      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
       syncControls();
       renderCards();
     });
 
     noteSelect.addEventListener("change", event => {
       state.note = event.target.value;
+      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
       renderCards();
     });
 
@@ -1383,7 +1389,13 @@
       const chip = event.target.closest(".chip");
       if (!chip) return;
       state.family = chip.dataset.family;
+      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
       syncControls();
+      renderCards();
+    });
+
+    loadMoreBtn.addEventListener("click", () => {
+      state.visibleLimit += LOAD_MORE_STEP;
       renderCards();
     });
 
@@ -1412,20 +1424,36 @@
 
     async function loadMaterials() {
       try {
-        const response = await fetch("materials.json", { cache: "no-store" });
+        const response = await fetch(DATA_URL, { cache: "no-store" });
         if (!response.ok) {
-          throw new Error(`materials.json 요청 실패: ${response.status}`);
+          throw new Error(`assets/materials.json 요청 실패: ${response.status}`);
         }
 
         const payload = await response.json();
         MATERIALS_META = payload.meta || {};
         MATERIALS = Array.isArray(payload) ? payload : (payload.materials || []);
 
+        MATERIALS = MATERIALS.map(item => ({
+          ...item,
+          _searchText: normalize([
+            item.name,
+            item.koreanName,
+            item.cas,
+            (item.type || []).join(" "),
+            (item.family || []).join(" "),
+            (item.notePosition || []).join(" "),
+            (item.odorKeywords || []).join(" "),
+            (item.role || []).join(" "),
+            item.summary,
+            item.caution
+          ].join(" "))
+        }));
+
         if (!Array.isArray(MATERIALS) || MATERIALS.length === 0) {
-          throw new Error("materials.json 안에 원료 데이터가 없습니다.");
+          throw new Error("assets/materials.json 안에 원료 데이터가 없습니다.");
         }
 
-        libraryStatus.innerHTML = `<strong>${escapeHtml(MATERIALS_META.version || "v0.05")}</strong> · ${escapeHtml(MATERIALS.length)}개 원료 데이터를 불러왔습니다. CAS 검증 필요 ${escapeHtml(MATERIALS_META.casNeedsVerificationCount ?? "-")}개 · 데이터 수정은 materials.json에서, 화면과 기능 수정은 index.html에서 관리합니다.`;
+        libraryStatus.innerHTML = `<strong>${escapeHtml(MATERIALS_META.version || "v0.06")}</strong> · ${escapeHtml(MATERIALS.length)}개 원료 데이터를 불러왔습니다. CAS 검증 필요 ${escapeHtml(MATERIALS_META.casNeedsVerificationCount ?? "-")}개 · 데이터 수정은 assets/materials.json에서, 화면과 기능 수정은 index.html에서 관리합니다. 첫 화면은 성능을 위해 일부 카드만 표시합니다.`;
         renderFamilyControls();
         renderCards();
       } catch (error) {
@@ -1436,7 +1464,7 @@
         emptyEl.style.display = "block";
         emptyEl.innerHTML = `
           <strong>materials.json을 불러오지 못했습니다.</strong><br />
-          index.html과 materials.json이 같은 폴더에 있는지 확인하세요. 로컬에서 바로 파일을 열면 브라우저 보안 정책 때문에 JSON을 불러오지 못할 수 있으니, 간단한 로컬 서버나 실제 호스팅 환경에서 확인하는 것을 권장합니다.
+          index.html 옆에 assets 폴더가 있고 그 안에 materials.json이 있는지 확인하세요. 로컬에서 바로 파일을 열면 브라우저 보안 정책 때문에 JSON을 불러오지 못할 수 있으니, 간단한 로컬 서버나 실제 호스팅 환경에서 확인하는 것을 권장합니다.
         `;
         libraryStatus.innerHTML = `<strong>데이터 로드 오류</strong> · ${escapeHtml(error.message)}`;
       }
