@@ -2,15 +2,16 @@
 <html lang="ko">
 <head>
   <!--
-    PERFUMERY.OR.KR v0.06
-    한국어 조향 원료 라이브러리 공개 초안 / 1,000개 기본 데이터셋
-    목적: 비영리 정보 아카이브 / index.html + assets/materials.json 데이터 분리 구조
+    PERFUMERY.OR.KR v0.07
+    한국어 조향 원료 라이브러리 / 1,000개 기본 데이터셋 / IndexedDB 조향 작업대
+    데이터: assets/materials.json
+    저장: 사용자 브라우저 IndexedDB, 서버 전송 없음
     기준일: 2026-06-18
   -->
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>PERFUMERY.OR.KR — 한국어 조향 원료 라이브러리 v0.06</title>
-  <meta name="description" content="향수 원료의 기본 식별 정보와 향취 계열을 한국어로 정리하는 비영리 공개 정보 아카이브 초안입니다. 원료 데이터는 assets/materials.json으로 분리했으며, v0.06에서 1,000개 기본 원료 데이터셋을 적용했습니다." />
+  <title>PERFUMERY.OR.KR — 조향 원료 라이브러리 & 작업대 v0.07</title>
+  <meta name="description" content="1,000개 향수 원료 기본 데이터셋과 IndexedDB 기반 조향 작업대입니다. 원료별 희석률과 용매를 입력하면 순원료량과 용매량을 자동 계산합니다." />
   <style>
     :root {
       --bg: #f7f3ea;
@@ -25,19 +26,17 @@
       --amber: #a97842;
       --cream: #fff9ef;
       --danger: #8f4d3b;
+      --good: #276b4e;
+      --warn: #98651e;
       --shadow: 0 18px 50px rgba(31, 42, 36, .11);
       --radius-lg: 28px;
       --radius-md: 18px;
       --radius-sm: 12px;
-      --max: 1180px;
+      --max: 1240px;
     }
 
     * { box-sizing: border-box; }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    html { scroll-behavior: smooth; }
     body {
       margin: 0;
       color: var(--ink);
@@ -47,1430 +46,910 @@
       font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans KR", "Apple SD Gothic Neo", sans-serif;
       line-height: 1.6;
     }
-
     a { color: inherit; text-decoration: none; }
-
-    button, input, select {
-      font: inherit;
-    }
-
-    .skip-link {
-      position: absolute;
-      top: -100px;
-      left: 16px;
-      background: var(--deep);
-      color: #fff;
-      padding: 10px 14px;
-      border-radius: 999px;
-      z-index: 99;
-    }
-
+    button, input, select, textarea { font: inherit; }
+    button { cursor: pointer; }
+    .skip-link { position: absolute; top: -100px; left: 16px; background: var(--deep); color: #fff; padding: 10px 14px; border-radius: 999px; z-index: 99; }
     .skip-link:focus { top: 16px; }
 
     .site-header {
-      position: sticky;
-      top: 0;
-      z-index: 50;
+      position: sticky; top: 0; z-index: 50;
       border-bottom: 1px solid rgba(31, 69, 56, .12);
-      background: rgba(247, 243, 234, .86);
+      background: rgba(247, 243, 234, .9);
       backdrop-filter: blur(18px);
     }
-
-    .nav {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 14px 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 18px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: fit-content;
-    }
-
-    .brand-mark {
-      width: 38px;
-      height: 38px;
-      border-radius: 14px;
-      background: linear-gradient(145deg, var(--deep), #4b6f5c);
-      color: var(--cream);
-      display: grid;
-      place-items: center;
-      font-weight: 800;
-      letter-spacing: -.05em;
-      box-shadow: 0 10px 20px rgba(31, 69, 56, .18);
-    }
-
-    .brand-title {
-      display: grid;
-      line-height: 1.08;
-    }
-
-    .brand-title strong {
-      font-size: 15px;
-      letter-spacing: .08em;
-    }
-
-    .brand-title span {
-      font-size: 12px;
-      color: var(--muted);
-    }
-
-    .nav-links {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-wrap: wrap;
-      justify-content: flex-end;
-    }
-
-    .nav-links a {
-      color: #31443b;
-      font-size: 14px;
-      padding: 9px 12px;
-      border-radius: 999px;
-    }
-
-    .nav-links a:hover {
-      background: rgba(31, 69, 56, .08);
-    }
-
-    .wrap {
-      max-width: var(--max);
-      margin: 0 auto;
-      padding: 0 20px;
-    }
-
-    .hero {
-      padding: 82px 0 48px;
-    }
-
-    .hero-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1.08fr) minmax(320px, .72fr);
-      gap: 34px;
-      align-items: stretch;
-    }
-
-    .eyebrow {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      color: var(--deep);
-      background: rgba(31, 69, 56, .08);
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 999px;
-      padding: 8px 12px;
-      font-size: 13px;
-      font-weight: 700;
-    }
-
-    .eyebrow::before {
-      content: "";
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--amber);
-    }
-
-    h1, h2, h3, p { margin-top: 0; }
-
-    h1 {
-      margin: 18px 0 18px;
-      font-size: clamp(39px, 7vw, 76px);
-      line-height: .96;
-      letter-spacing: -.07em;
-    }
-
-    .hero-lead {
-      max-width: 700px;
-      color: #435148;
-      font-size: clamp(17px, 2vw, 21px);
-      line-height: 1.72;
-      margin-bottom: 28px;
-    }
-
-    .hero-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-    }
-
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      min-height: 46px;
-      padding: 12px 17px;
-      border-radius: 999px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      font-weight: 800;
-      transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
-    }
-
-    .btn:hover { transform: translateY(-1px); }
-
-    .btn-primary {
-      background: var(--deep);
-      color: var(--cream);
-      box-shadow: 0 16px 30px rgba(31, 69, 56, .18);
-    }
-
-    .btn-secondary {
-      background: rgba(255, 253, 248, .72);
-      border-color: rgba(31, 69, 56, .16);
-      color: var(--deep);
-    }
-
-    .hero-card {
-      position: relative;
-      overflow: hidden;
-      background: rgba(255, 253, 248, .72);
-      border: 1px solid rgba(31, 69, 56, .14);
-      border-radius: var(--radius-lg);
-      box-shadow: var(--shadow);
-      padding: 26px;
-      min-height: 390px;
-      display: grid;
-      align-content: space-between;
-    }
-
-    .hero-card::after {
-      content: "PERFUMERY";
-      position: absolute;
-      right: -42px;
-      top: 62px;
-      transform: rotate(90deg);
-      color: rgba(31, 69, 56, .06);
-      font-weight: 900;
-      letter-spacing: .12em;
-      font-size: 48px;
-      pointer-events: none;
-    }
-
-    .index-card-title {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-      margin-bottom: 14px;
-    }
-
-    .hero-stats {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 12px;
-      margin-bottom: 28px;
-    }
-
-    .stat {
-      background: rgba(255, 249, 239, .76);
-      border: 1px solid rgba(216, 204, 186, .8);
-      border-radius: 18px;
-      padding: 15px;
-    }
-
-    .stat strong {
-      display: block;
-      font-size: 27px;
-      line-height: 1;
-      letter-spacing: -.04em;
-      color: var(--deep);
-    }
-
-    .stat span {
-      display: block;
-      margin-top: 8px;
-      color: var(--muted);
-      font-size: 13px;
-    }
-
-    .note-box {
-      position: relative;
-      z-index: 1;
-      background: var(--deep-2);
-      color: var(--cream);
-      border-radius: 22px;
-      padding: 22px;
-    }
-
-    .note-box p {
-      margin: 0;
-      color: rgba(255, 249, 239, .86);
-      font-size: 15px;
-    }
-
-    .section {
-      padding: 46px 0;
-    }
-
-    .section-head {
-      display: flex;
-      align-items: end;
-      justify-content: space-between;
-      gap: 24px;
-      margin-bottom: 22px;
-    }
-
-    .section h2 {
-      margin: 0;
-      font-size: clamp(27px, 4vw, 42px);
-      line-height: 1.08;
-      letter-spacing: -.05em;
-    }
-
-    .section-desc {
-      color: var(--muted);
-      max-width: 620px;
-      margin: 10px 0 0;
-    }
-
-    .toolbar {
-      position: sticky;
-      top: 67px;
-      z-index: 40;
-      background: rgba(247, 243, 234, .9);
-      backdrop-filter: blur(16px);
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 24px;
-      padding: 14px;
-      margin-bottom: 22px;
-      box-shadow: 0 14px 32px rgba(31, 42, 36, .08);
-    }
-
-    .search-row {
-      display: grid;
-      grid-template-columns: 1fr 220px 160px;
-      gap: 10px;
-    }
-
-    .field {
-      position: relative;
-    }
-
-    .field input,
-    .field select {
-      width: 100%;
-      min-height: 48px;
-      border: 1px solid rgba(31, 69, 56, .16);
-      border-radius: 16px;
-      background: rgba(255, 253, 248, .82);
-      color: var(--ink);
-      padding: 12px 14px;
-      outline: none;
-    }
-
-    .field input:focus,
-    .field select:focus {
-      border-color: rgba(31, 69, 56, .56);
-      box-shadow: 0 0 0 4px rgba(31, 69, 56, .08);
-    }
-
-    .filter-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 8px;
-      margin-top: 12px;
-    }
-
-    .chip {
-      border: 1px solid rgba(31, 69, 56, .14);
-      background: rgba(255, 253, 248, .72);
-      color: #35453d;
-      border-radius: 999px;
-      padding: 8px 11px;
-      cursor: pointer;
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .chip.active {
-      background: var(--deep);
-      color: var(--cream);
-      border-color: var(--deep);
-    }
-
-    .library-meta {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 14px;
-      color: var(--muted);
-      font-size: 14px;
-      margin: 0 4px 16px;
-    }
-
-    .cards {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .material-card {
-      display: flex;
-      flex-direction: column;
-      min-height: 305px;
-      background: rgba(255, 253, 248, .76);
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 24px;
-      padding: 20px;
-      box-shadow: 0 10px 28px rgba(31, 42, 36, .06);
-      transition: transform .16s ease, box-shadow .16s ease, border-color .16s ease;
-    }
-
-    .material-card:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 20px 40px rgba(31, 42, 36, .11);
-      border-color: rgba(31, 69, 56, .28);
-    }
-
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      gap: 14px;
-      align-items: flex-start;
-      margin-bottom: 14px;
-    }
-
-    .material-card h3 {
-      margin: 0;
-      font-size: 21px;
-      line-height: 1.16;
-      letter-spacing: -.03em;
-    }
-
-    .ko-name {
-      display: block;
-      margin-top: 4px;
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      white-space: nowrap;
-      min-height: 27px;
-      border-radius: 999px;
-      padding: 5px 9px;
-      background: rgba(169, 120, 66, .12);
-      color: #755127;
-      font-size: 12px;
-      font-weight: 800;
-      border: 1px solid rgba(169, 120, 66, .14);
-    }
-
-    .odor-list {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 7px;
-      margin: 8px 0 14px;
-    }
-
-    .odor {
-      border-radius: 999px;
-      background: rgba(31, 69, 56, .07);
-      color: #365247;
-      padding: 6px 9px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .summary {
-      color: #3f4c44;
-      font-size: 14px;
-      margin-bottom: 16px;
-      flex: 1;
-    }
-
-    .card-data {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 8px;
-      margin-bottom: 16px;
-    }
-
-    .mini-data {
-      border-radius: 14px;
-      background: rgba(240, 234, 223, .58);
-      padding: 10px 11px;
-      min-height: 58px;
-    }
-
-    .mini-data span {
-      display: block;
-      color: var(--muted);
-      font-size: 11px;
-      font-weight: 800;
-      text-transform: uppercase;
-      letter-spacing: .04em;
-    }
-
-    .mini-data strong {
-      display: block;
-      margin-top: 3px;
-      font-size: 13px;
-      line-height: 1.3;
-    }
-
-    .card-footer {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      margin-top: auto;
-    }
-
-    .small-link {
-      border: none;
-      background: transparent;
-      color: var(--deep);
-      font-weight: 900;
-      padding: 8px 0;
-      cursor: pointer;
-    }
-
-    .small-muted {
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .empty-state {
-      display: none;
-      text-align: center;
-      padding: 54px 20px;
-      border: 1px dashed rgba(31, 69, 56, .28);
-      border-radius: 26px;
-      background: rgba(255, 253, 248, .62);
-      color: var(--muted);
-    }
-
-    .grid-2 {
-      display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      gap: 16px;
-    }
-
-    .info-panel {
-      background: rgba(255, 253, 248, .72);
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 24px;
-      padding: 24px;
-      box-shadow: 0 10px 28px rgba(31, 42, 36, .06);
-    }
-
-    .info-panel h3 {
-      margin: 0 0 12px;
-      font-size: 21px;
-      letter-spacing: -.03em;
-    }
-
-    .info-panel p,
-    .info-panel li {
-      color: #48554d;
-    }
-
-    .info-panel ul {
-      margin: 12px 0 0;
-      padding-left: 20px;
-    }
-
-    .glossary {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 12px;
-    }
-
-    .term {
-      background: rgba(255, 253, 248, .76);
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 20px;
-      padding: 18px;
-    }
-
-    .term strong {
-      display: block;
-      color: var(--deep);
-      margin-bottom: 7px;
-      letter-spacing: -.02em;
-    }
-
-    .term p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .principles {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 14px;
-    }
-
-    .principle {
-      border-radius: 24px;
-      padding: 22px;
-      min-height: 188px;
-      background: var(--deep-2);
-      color: var(--cream);
-      overflow: hidden;
-      position: relative;
-    }
-
-    .principle:nth-child(2) {
-      background: #513e27;
-    }
-
-    .principle:nth-child(3) {
-      background: #33453b;
-    }
-
-    .principle span {
-      display: block;
-      color: rgba(255, 249, 239, .55);
-      font-weight: 900;
-      font-size: 13px;
-      letter-spacing: .08em;
-      margin-bottom: 34px;
-    }
-
-    .principle h3 {
-      margin: 0 0 8px;
-      font-size: 22px;
-      letter-spacing: -.04em;
-    }
-
-    .principle p {
-      margin: 0;
-      color: rgba(255, 249, 239, .78);
-      font-size: 14px;
-    }
-
-    .site-footer {
-      margin-top: 46px;
-      padding: 34px 0 50px;
-      border-top: 1px solid rgba(31, 69, 56, .12);
-      color: var(--muted);
-      font-size: 14px;
-    }
-
-    .footer-grid {
-      display: grid;
-      grid-template-columns: 1fr auto;
-      gap: 24px;
-      align-items: start;
-    }
-
-    .footer-links {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 9px;
-      justify-content: flex-end;
-    }
-
-    .footer-links a {
-      border: 1px solid rgba(31, 69, 56, .12);
-      border-radius: 999px;
-      padding: 8px 11px;
-      background: rgba(255, 253, 248, .5);
-    }
-
-    .modal {
-      position: fixed;
-      inset: 0;
-      z-index: 100;
-      display: none;
-    }
-
-    .modal.is-open {
-      display: block;
-    }
-
-    .modal-backdrop {
-      position: absolute;
-      inset: 0;
-      background: rgba(18, 24, 21, .54);
-      backdrop-filter: blur(6px);
-    }
-
-    .modal-panel {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: min(940px, calc(100vw - 30px));
-      max-height: calc(100vh - 36px);
-      overflow: auto;
-      border-radius: 30px;
-      background: var(--panel);
-      box-shadow: 0 30px 90px rgba(0, 0, 0, .3);
-      border: 1px solid rgba(255, 255, 255, .8);
-    }
-
-    .modal-head {
-      position: sticky;
-      top: 0;
-      z-index: 2;
-      background: rgba(255, 253, 248, .9);
-      backdrop-filter: blur(14px);
-      display: flex;
-      justify-content: space-between;
-      align-items: start;
-      gap: 18px;
-      padding: 24px 26px;
-      border-bottom: 1px solid rgba(31, 69, 56, .1);
-    }
-
-    .modal-head h2 {
-      margin: 0;
-      font-size: clamp(27px, 4vw, 44px);
-      line-height: 1.05;
-      letter-spacing: -.05em;
-    }
-
-    .close-btn {
-      width: 42px;
-      height: 42px;
-      border: 1px solid rgba(31, 69, 56, .12);
-      background: rgba(240, 234, 223, .8);
-      color: var(--ink);
-      border-radius: 50%;
-      cursor: pointer;
-      font-weight: 900;
-      font-size: 20px;
-    }
-
-    .modal-body {
-      padding: 24px 26px 28px;
-    }
-
-    .detail-grid {
-      display: grid;
-      grid-template-columns: .8fr 1.2fr;
-      gap: 18px;
-    }
-
-    .detail-box {
-      border-radius: 22px;
-      background: rgba(240, 234, 223, .52);
-      padding: 18px;
-      border: 1px solid rgba(31, 69, 56, .09);
-    }
-
-    .detail-box h3 {
-      margin: 0 0 12px;
-      font-size: 16px;
-      color: var(--deep);
-      letter-spacing: -.02em;
-    }
-
-    .detail-list {
-      display: grid;
-      gap: 10px;
-      margin: 0;
-    }
-
-    .detail-row {
-      display: grid;
-      grid-template-columns: 110px 1fr;
-      gap: 12px;
-      padding-bottom: 10px;
-      border-bottom: 1px solid rgba(31, 69, 56, .08);
-    }
-
-    .detail-row:last-child {
-      border-bottom: none;
-      padding-bottom: 0;
-    }
-
-    .detail-row dt {
-      color: var(--muted);
-      font-size: 13px;
-      font-weight: 800;
-    }
-
-    .detail-row dd {
-      margin: 0;
-      font-size: 14px;
-    }
-
-    .detail-section {
-      margin-top: 18px;
-      border-radius: 22px;
-      background: rgba(255, 249, 239, .82);
-      padding: 18px;
-      border: 1px solid rgba(31, 69, 56, .09);
-    }
-
-    .detail-section h3 {
-      margin: 0 0 10px;
-      font-size: 17px;
-      color: var(--deep);
-    }
-
-    .detail-section p {
-      margin: 0;
-      color: #3f4c44;
-    }
-
-    .notice {
-      margin-top: 18px;
-      border-left: 4px solid var(--amber);
-      background: rgba(169, 120, 66, .08);
-      border-radius: 14px;
-      padding: 14px 16px;
-      color: #5f4a2f;
-      font-size: 14px;
-    }
-
-    .source-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      border-radius: 999px;
-      padding: 7px 10px;
-      background: rgba(143, 77, 59, .09);
-      color: var(--danger);
-      font-size: 12px;
-      font-weight: 900;
-    }
-
-    @media (max-width: 960px) {
-      .hero-grid,
-      .grid-2,
-      .detail-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .cards,
-      .glossary,
-      .principles {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-      }
-
-      .search-row {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .search-row .field:first-child {
-        grid-column: 1 / -1;
-      }
-    }
-
-    @media (max-width: 720px) {
-      .nav {
-        align-items: flex-start;
-      }
-
-      .nav-links {
-        display: none;
-      }
-
-      .hero {
-        padding-top: 52px;
-      }
-
-      .hero-card {
-        min-height: auto;
-      }
-
-      .section-head {
-        display: block;
-      }
-
-      .toolbar {
-        top: 66px;
-        border-radius: 20px;
-      }
-
-      .search-row,
-      .cards,
-      .glossary,
-      .principles {
-        grid-template-columns: 1fr;
-      }
-
-      .library-meta {
-        display: block;
-      }
-
-      .card-data {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .footer-links {
-        justify-content: flex-start;
-      }
-
-      .detail-row {
-        grid-template-columns: 1fr;
-        gap: 2px;
-      }
+    .nav { max-width: var(--max); margin: 0 auto; padding: 14px 20px; display: flex; justify-content: space-between; gap: 16px; align-items: center; }
+    .brand { display: flex; flex-direction: column; gap: 1px; }
+    .brand strong { font-size: 15px; letter-spacing: .12em; }
+    .brand span { font-size: 12px; color: var(--muted); }
+    .nav-links { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+    .nav-links a, .small-action {
+      border: 1px solid rgba(31, 69, 56, .15); background: rgba(255,255,255,.5);
+      padding: 8px 11px; border-radius: 999px; font-size: 13px; color: var(--deep-2);
+    }
+    .small-action:hover, .nav-links a:hover { border-color: rgba(31, 69, 56, .38); background: #fff; }
+
+    main { max-width: var(--max); margin: 0 auto; padding: 28px 20px 90px; }
+    .hero { display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px; align-items: stretch; margin-top: 18px; }
+    .hero-card, .panel, .workspace, .library-shell {
+      border: 1px solid rgba(31, 69, 56, .14); background: rgba(255, 253, 248, .78); box-shadow: var(--shadow); border-radius: var(--radius-lg);
+    }
+    .hero-card { padding: 36px; position: relative; overflow: hidden; }
+    .hero-card::after { content: ""; position: absolute; width: 260px; height: 260px; right: -110px; top: -100px; border-radius: 50%; background: rgba(169, 120, 66, .14); }
+    .eyebrow { display: inline-flex; align-items: center; gap: 8px; font-size: 12px; color: var(--amber); letter-spacing: .13em; text-transform: uppercase; font-weight: 800; }
+    h1 { margin: 12px 0 16px; font-size: clamp(34px, 5.8vw, 64px); line-height: 1.05; letter-spacing: -.06em; }
+    h2 { margin: 0 0 16px; font-size: clamp(22px, 3vw, 32px); letter-spacing: -.035em; }
+    h3 { margin: 0 0 10px; font-size: 18px; letter-spacing: -.02em; }
+    .lead { color: #3d4942; font-size: 17px; max-width: 760px; }
+    .hero-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+    .btn { border: 0; border-radius: 999px; padding: 11px 16px; font-weight: 800; background: var(--deep); color: #fff; display: inline-flex; align-items: center; gap: 8px; }
+    .btn.secondary { background: #fff; color: var(--deep); border: 1px solid rgba(31,69,56,.2); }
+    .btn.ghost { background: transparent; color: var(--deep); border: 1px solid rgba(31,69,56,.22); }
+    .btn.danger { background: var(--danger); color: #fff; }
+    .btn:disabled { opacity: .45; cursor: not-allowed; }
+    .stats-card { padding: 24px; display: grid; gap: 12px; }
+    .stat-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(31,69,56,.12); }
+    .stat-row:last-child { border-bottom: 0; }
+    .stat-row span { color: var(--muted); }
+    .stat-row strong { font-size: 24px; color: var(--deep); }
+
+    .grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) 420px; gap: 20px; align-items: start; margin-top: 22px; }
+    .library-shell { padding: 18px; }
+    .controls { display: grid; gap: 12px; margin-bottom: 16px; }
+    .search-line { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+    .input, .select, .textarea {
+      width: 100%; border: 1px solid rgba(31,69,56,.18); background: rgba(255,255,255,.78); color: var(--ink);
+      border-radius: 14px; padding: 12px 13px; outline: none;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: rgba(31,69,56,.55); box-shadow: 0 0 0 4px rgba(31,69,56,.08); }
+    .filter-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+    .chip { border: 1px solid rgba(31,69,56,.18); background: rgba(255,255,255,.6); padding: 8px 10px; border-radius: 999px; font-size: 13px; color: var(--deep-2); }
+    .chip.active { background: var(--deep); color: #fff; border-color: var(--deep); }
+    .results-meta { display: flex; justify-content: space-between; gap: 12px; flex-wrap: wrap; color: var(--muted); font-size: 13px; margin: 12px 2px; }
+    .cards { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+    .material-card { border: 1px solid rgba(31,69,56,.14); background: rgba(255, 253, 248, .92); border-radius: 20px; padding: 16px; min-height: 190px; display: flex; flex-direction: column; justify-content: space-between; gap: 14px; transition: .16s ease; }
+    .material-card:hover { transform: translateY(-2px); box-shadow: 0 14px 26px rgba(31,42,36,.10); border-color: rgba(31,69,56,.28); }
+    .material-card h3 { font-size: 17px; margin: 0 0 2px; }
+    .kor { color: var(--muted); font-size: 13px; }
+    .card-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 11px; color: #355046; background: rgba(31,69,56,.08); padding: 4px 7px; border-radius: 999px; }
+    .cas { font-size: 12px; color: var(--muted); word-break: break-word; }
+    .card-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mini-btn { border: 1px solid rgba(31,69,56,.18); background: #fff; color: var(--deep); border-radius: 999px; padding: 8px 10px; font-size: 12px; font-weight: 800; }
+    .mini-btn.primary { background: var(--deep); color: #fff; border-color: var(--deep); }
+    .mini-btn.warn { color: var(--warn); }
+
+    .workspace { position: sticky; top: 82px; padding: 18px; max-height: calc(100vh - 104px); overflow: auto; }
+    .workspace-title { display:flex; justify-content:space-between; gap: 10px; align-items:flex-start; margin-bottom: 12px; }
+    .workspace-title p { margin: 4px 0 0; color: var(--muted); font-size: 13px; }
+    .form-grid { display: grid; grid-template-columns: 1fr 130px; gap: 10px; margin: 12px 0; }
+    .preset-row { display:flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .preset { border:1px solid rgba(31,69,56,.18); background:#fff; border-radius:999px; padding:8px 10px; font-size:12px; font-weight:800; color:var(--deep); }
+    .preset.active { background:var(--deep); color:#fff; border-color:var(--deep); }
+    .summary-box { display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin: 12px 0; }
+    .metric { background: rgba(31,69,56,.06); border: 1px solid rgba(31,69,56,.1); border-radius: 16px; padding: 10px; }
+    .metric small { display:block; color: var(--muted); font-size: 11px; }
+    .metric strong { display:block; font-size: 18px; color: var(--deep); line-height: 1.3; }
+    .metric.danger strong { color: var(--danger); }
+    .metric.good strong { color: var(--good); }
+    .metric.warn strong { color: var(--warn); }
+
+    .formula-list { display: grid; gap: 10px; }
+    .formula-row { border: 1px solid rgba(31,69,56,.13); background: rgba(255,255,255,.62); border-radius: 18px; padding: 12px; display: grid; gap: 10px; }
+    .row-head { display:flex; justify-content:space-between; gap:10px; align-items:flex-start; }
+    .row-head strong { line-height: 1.2; }
+    .row-head span { display:block; color: var(--muted); font-size: 12px; margin-top: 2px; }
+    .row-inputs { display:grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .row-inputs label, .notes-field label { font-size: 11px; color: var(--muted); display:grid; gap: 4px; }
+    .calc-line { display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; font-size: 11px; color: var(--muted); }
+    .calc-line b { display:block; font-size: 13px; color: var(--deep); }
+    .empty { border: 1px dashed rgba(31,69,56,.22); border-radius: 18px; padding: 18px; color: var(--muted); text-align: center; background: rgba(255,255,255,.45); }
+    .saved-list { display:grid; gap: 8px; margin-top: 10px; }
+    .saved-item { border: 1px solid rgba(31,69,56,.12); background:#fff; border-radius: 15px; padding: 10px; display:grid; gap:6px; }
+    .saved-item strong { font-size: 13px; }
+    .saved-item small { color: var(--muted); }
+    .saved-actions { display:flex; gap:6px; flex-wrap:wrap; }
+    .divider { height: 1px; background: rgba(31,69,56,.12); margin: 16px 0; }
+    .notice { color: var(--muted); font-size: 12px; background: rgba(169,120,66,.09); border: 1px solid rgba(169,120,66,.16); border-radius: 14px; padding: 10px; }
+    .solvent-summary { margin-top: 8px; display:grid; gap: 5px; }
+    .bar-row { display:grid; grid-template-columns: 80px 1fr auto; gap: 8px; align-items:center; font-size: 12px; color: var(--muted); }
+    .bar { height: 8px; background: rgba(31,69,56,.1); border-radius:999px; overflow:hidden; }
+    .bar > i { display:block; height: 100%; background: rgba(31,69,56,.55); border-radius:999px; }
+
+    .load-more { display:flex; justify-content:center; margin-top: 18px; }
+    .modal-backdrop { position: fixed; inset: 0; background: rgba(20, 31, 27, .54); display: none; align-items: center; justify-content: center; padding: 18px; z-index: 80; }
+    .modal-backdrop.open { display:flex; }
+    .modal { width:min(760px, 100%); max-height: 88vh; overflow:auto; background: var(--panel); border-radius: 28px; box-shadow: 0 26px 80px rgba(0,0,0,.25); padding: 22px; }
+    .modal-head { display:flex; justify-content:space-between; gap:12px; align-items:flex-start; margin-bottom: 14px; }
+    .modal h2 { margin-bottom: 4px; }
+    .detail-grid { display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; }
+    .detail-item { border: 1px solid rgba(31,69,56,.12); background: rgba(255,255,255,.55); border-radius: 16px; padding: 12px; }
+    .detail-item small { color: var(--muted); display:block; margin-bottom: 4px; }
+    .toast { position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(30px); opacity:0; pointer-events:none; z-index: 100; background: var(--deep); color:#fff; padding: 12px 15px; border-radius:999px; box-shadow: var(--shadow); transition:.2s ease; font-size: 14px; }
+    .toast.show { opacity:1; transform: translateX(-50%) translateY(0); }
+    .file-input { display:none; }
+
+    @media (max-width: 1080px) {
+      .hero, .grid-2 { grid-template-columns: 1fr; }
+      .workspace { position: static; max-height: none; }
+    }
+    @media (max-width: 760px) {
+      .nav { align-items:flex-start; flex-direction:column; }
+      .nav-links { justify-content:flex-start; }
+      main { padding-left: 14px; padding-right: 14px; }
+      .hero-card { padding: 24px; }
+      .cards { grid-template-columns: 1fr; }
+      .search-line, .form-grid, .row-inputs, .detail-grid { grid-template-columns: 1fr; }
+      .summary-box, .calc-line { grid-template-columns: 1fr; }
+      .bar-row { grid-template-columns: 62px 1fr 58px; }
     }
   </style>
 </head>
 <body>
-  <a class="skip-link" href="#library">원료 라이브러리로 바로가기</a>
-
+  <a class="skip-link" href="#library">본문으로 이동</a>
   <header class="site-header">
     <nav class="nav" aria-label="주요 메뉴">
       <a class="brand" href="#top" aria-label="PERFUMERY.OR.KR 홈">
-        <span class="brand-mark">P</span>
-        <span class="brand-title">
-          <strong>PERFUMERY.OR.KR</strong>
-          <span>한국어 조향 원료 라이브러리 v0.06</span>
-        </span>
+        <strong>PERFUMERY.OR.KR</strong>
+        <span>Material Library · Formula Workspace v0.07</span>
       </a>
       <div class="nav-links">
         <a href="#library">원료 라이브러리</a>
-        <a href="#families">향취별 보기</a>
-        <a href="#glossary">조향 용어</a>
-        <a href="#principles">운영 원칙</a>
+        <a href="#workspace">조향 작업대</a>
+        <a href="#saved">저장 처방</a>
       </div>
     </nav>
   </header>
 
   <main id="top">
-    <section class="hero">
-      <div class="wrap hero-grid">
-        <div>
-          <span class="eyebrow">Korean Perfumery Material Archive</span>
-          <h1>조향 원료를<br />한국어로 정리하는<br />공개형 아카이브</h1>
-          <p class="hero-lead">
-            향수 원료의 이름, CAS Number, 향취 계열, 조향에서의 기본 역할을 한 곳에 모아두는 비영리 정보 라이브러리입니다.
-            공개 페이지에는 기본 정보만 노출하고, 개인적인 배합·사용감·내부 실무 메모는 포함하지 않는 구조로 정리했습니다.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#library">원료 둘러보기</a>
-            <a class="btn btn-secondary" href="#principles">운영 원칙 보기</a>
-          </div>
+    <section class="hero" aria-labelledby="hero-title">
+      <div class="hero-card">
+        <span class="eyebrow">Korean Perfumery Archive</span>
+        <h1 id="hero-title">원료를 고르고,<br />처방을 계산하는<br />조향 작업대.</h1>
+        <p class="lead">1,000개 원료 기본 데이터셋을 바탕으로 원료를 선택하고, 10g 또는 1,000g 기준 제조량에 맞춰 배합비·희석률·용매량을 계산합니다. 저장된 처방은 서버가 아닌 현재 브라우저의 IndexedDB에 보관됩니다.</p>
+        <div class="hero-actions">
+          <a class="btn" href="#library">원료 선택하기</a>
+          <a class="btn secondary" href="#workspace">작업대 보기</a>
         </div>
-
-        <aside class="hero-card" aria-label="사이트 요약">
-          <div>
-            <div class="index-card-title">v0.06 scope</div>
-            <div class="hero-stats">
-              <div class="stat">
-                <strong id="statMaterials">-</strong>
-                <span>등록 원료 카드</span>
-              </div>
-              <div class="stat">
-                <strong>30+</strong>
-                <span>향취 계열 필터</span>
-              </div>
-              <div class="stat">
-                <strong>4</strong>
-                <span>기초 정보 섹션</span>
-              </div>
-              <div class="stat">
-                <strong>1</strong>
-                <span>데이터 분리 구조</span>
-              </div>
-            </div>
-          </div>
-          <div class="note-box">
-            <p>
-              이 초안은 index.html과 assets/materials.json을 분리한 공개용 버전입니다. 원료 데이터는 assets/materials.json에서 관리하고, 화면·스타일·기능은 index.html에서 관리합니다.
-            </p>
-          </div>
-        </aside>
       </div>
+      <aside class="stats-card panel" aria-label="데이터 현황">
+        <div class="stat-row"><span>총 원료 데이터</span><strong id="statTotal">-</strong></div>
+        <div class="stat-row"><span>CAS 보강 완료</span><strong id="statCasFilled">-</strong></div>
+        <div class="stat-row"><span>CAS 검증 필요</span><strong id="statCasNeed">-</strong></div>
+        <div class="notice">처방 계산은 배합 설계 보조용입니다. 제품 제조·판매 적용 전 SDS, IFRA, 알러젠, 국내 표시 기준을 별도로 확인하세요.</div>
+      </aside>
     </section>
 
-    <section id="library" class="section">
-      <div class="wrap">
-        <div class="section-head">
+    <section class="grid-2" aria-label="원료 라이브러리와 조향 작업대">
+      <div id="library" class="library-shell">
+        <div class="controls">
           <div>
+            <span class="eyebrow">Material Library</span>
             <h2>원료 라이브러리</h2>
-            <p class="section-desc">원료명, 한글명, CAS Number, 향취 키워드, 조향 역할을 기준으로 검색할 수 있습니다.</p>
+          </div>
+          <div class="search-line">
+            <input id="searchInput" class="input" type="search" placeholder="원료명, 한글명, CAS, 향취, 역할 검색" autocomplete="off" />
+            <button id="resetBtn" class="btn secondary" type="button">초기화</button>
+          </div>
+          <div class="filter-row" id="familyFilters" aria-label="향취 계열 필터"></div>
+          <div class="filter-row">
+            <select id="noteFilter" class="select" aria-label="노트 위치 필터">
+              <option value="all">노트 전체</option>
+              <option value="Top">Top</option>
+              <option value="Middle">Middle</option>
+              <option value="Base">Base</option>
+            </select>
+            <select id="casFilter" class="select" aria-label="CAS 상태 필터">
+              <option value="all">CAS 상태 전체</option>
+              <option value="filled">CAS 보강 완료</option>
+              <option value="needs_verification">CAS 검증 필요</option>
+            </select>
           </div>
         </div>
-
-        <div class="toolbar" aria-label="원료 검색과 필터">
-          <div class="search-row">
-            <label class="field">
-              <span class="visually-hidden">검색어</span>
-              <input id="searchInput" type="search" placeholder="예: Hedione, 머스크, woody, fixative, green, lactone" autocomplete="off" />
-            </label>
-            <label class="field">
-              <span class="visually-hidden">향취 계열</span>
-              <select id="familySelect">
-                <option value="all">전체 계열</option>
-              </select>
-            </label>
-            <label class="field">
-              <span class="visually-hidden">노트 위치</span>
-              <select id="noteSelect">
-                <option value="all">전체 노트</option>
-                <option value="Top">Top</option>
-                <option value="Middle">Middle</option>
-                <option value="Base">Base</option>
-              </select>
-            </label>
-          </div>
-          <div id="chipArea" class="filter-chips" aria-label="빠른 향취 필터"></div>
+        <div class="results-meta">
+          <span id="resultCount">원료를 불러오는 중입니다.</span>
+          <span id="visibleCount"></span>
         </div>
-
-        <div class="library-meta">
-          <span id="resultCount">원료 데이터를 불러오는 중입니다.</span>
-          <span>카드를 누르면 공개 상세 정보를 볼 수 있습니다.</span>
-        </div>
-
-        <div id="libraryStatus" class="library-status" role="status">
-          <strong>assets/materials.json</strong> 파일을 불러옵니다. 서버에 올릴 때는 index.html 옆에 assets 폴더를 만들고 그 안에 materials.json을 두세요.
-        </div>
-
-        <div id="cards" class="cards"></div>
-        <div class="load-more-wrap"><button id="loadMoreBtn" class="load-more-btn" type="button" hidden>더 보기</button></div>
-        <div id="emptyState" class="empty-state">
-          <strong>검색 결과가 없습니다.</strong><br />다른 원료명, 향취, 역할 키워드로 검색해보세요.
-        </div>
+        <div id="cards" class="cards" aria-live="polite"></div>
+        <div class="load-more"><button id="loadMoreBtn" class="btn secondary" type="button">더 보기</button></div>
       </div>
-    </section>
 
-    <section id="families" class="section">
-      <div class="wrap">
-        <div class="section-head">
+      <aside id="workspace" class="workspace" aria-labelledby="workspace-title">
+        <div class="workspace-title">
           <div>
-            <h2>향취별 보기</h2>
-            <p class="section-desc">처음에는 큰 계열 중심으로 시작하고, 원료 수가 늘어나면 세부 향취와 원료 비교 기능으로 확장합니다.</p>
+            <span class="eyebrow">Formula Workspace</span>
+            <h2 id="workspace-title">조향 작업대</h2>
+            <p>배합비는 최종 처방에 투입하는 희석액/원액의 비율입니다.</p>
           </div>
+          <button id="newFormulaBtn" class="mini-btn" type="button">새 처방</button>
         </div>
-        <div class="grid-2">
-          <article class="info-panel">
-            <h3>초기 향취 계열</h3>
-            <p>Citrus, Floral, Woody, Musk, Amber, Green, Powdery, Fruity를 기본으로 두고 Marine, Lactonic, Resinous, Aldehydic 등 세부 계열을 함께 사용합니다.</p>
-            <ul>
-              <li>대중에게 이해 쉬운 큰 분류를 먼저 사용</li>
-              <li>전문 원료가 늘어나면 Aldehydic, Lactonic, Animalic 등 추가</li>
-              <li>각 원료는 여러 계열에 동시에 속할 수 있음</li>
-            </ul>
-          </article>
-          <article class="info-panel">
-            <h3>확장 방향</h3>
-            <p>나중에는 원료 간 관계를 연결해서 “대체 원료”, “잘 어울리는 원료”, “특정 어코드의 참고 원료”까지 보여줄 수 있습니다.</p>
-            <ul>
-              <li>원료 비교: Linalool vs Ethyl Linalool</li>
-              <li>어코드 추천: Muguet, Amber, Clean Musk</li>
-              <li>규정 메모: IFRA, 알러젠, SDS 확인 상태</li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
 
-    <section id="glossary" class="section">
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <h2>조향 용어사전</h2>
-            <p class="section-desc">원료 상세 페이지와 연결될 기초 용어입니다. v0.06에서는 1,000개 원료 기본 데이터셋을 적용하고, CAS 검증 상태를 데이터에서 분리 관리합니다.</p>
-          </div>
+        <div class="form-grid">
+          <input id="formulaTitle" class="input" type="text" placeholder="처방명 예: Floral Musk v0.1" />
+          <input id="batchAmount" class="input" type="number" min="0.001" step="0.001" value="10" aria-label="제조량 g" />
         </div>
-        <div class="glossary">
-          <article class="term">
-            <strong>Top Note</strong>
-            <p>향의 첫인상을 만드는 휘발성 높은 영역입니다. 시트러스, 알데하이드, 가벼운 허브가 자주 사용됩니다.</p>
-          </article>
-          <article class="term">
-            <strong>Middle Note</strong>
-            <p>향수의 중심 인상을 구성하는 영역입니다. 플로럴, 스파이스, 그린, 프루티 소재가 많이 배치됩니다.</p>
-          </article>
-          <article class="term">
-            <strong>Base Note</strong>
-            <p>잔향과 지속감을 만드는 영역입니다. 우디, 머스크, 앰버, 바닐라, 발삼 소재가 주로 사용됩니다.</p>
-          </article>
-          <article class="term">
-            <strong>Diffusion</strong>
-            <p>향이 공간으로 퍼져나가는 느낌입니다. 확산감이 좋은 원료는 향의 존재감을 넓혀줍니다.</p>
-          </article>
-          <article class="term">
-            <strong>Substantivity</strong>
-            <p>피부나 시향지 위에서 향이 남아있는 성질입니다. 지속감 판단에 참고합니다.</p>
-          </article>
-          <article class="term">
-            <strong>Modifier</strong>
-            <p>향의 주인공은 아니지만 질감, 투명도, 방향성을 조정하는 보조 원료입니다.</p>
-          </article>
+        <div class="preset-row" aria-label="제조량 프리셋">
+          <button class="preset active" data-amount="10" type="button">10g 기준</button>
+          <button class="preset" data-amount="1000" type="button">1,000g 기준</button>
+          <span class="chip">직접 입력 가능</span>
         </div>
-      </div>
-    </section>
 
-    <section id="principles" class="section">
-      <div class="wrap">
-        <div class="section-head">
-          <div>
-            <h2>운영 원칙</h2>
-            <p class="section-desc">협회 산하 전문 자료실 성격을 고려해 판매보다 정보, 홍보보다 기준을 우선합니다.</p>
-          </div>
+        <div class="summary-box" id="summaryBox"></div>
+        <div id="solventSummary" class="solvent-summary"></div>
+        <div class="notice">예: 제조량 10g, 처방 비율 5%, 희석률 10%이면 10% 희석액 0.5g을 투입하며, 순원료는 0.05g, 용매는 0.45g입니다.</div>
+
+        <div class="divider"></div>
+        <div id="formulaList" class="formula-list"></div>
+
+        <div class="divider"></div>
+        <div class="notes-field">
+          <label>처방 메모
+            <textarea id="formulaNotes" class="textarea" rows="3" placeholder="시향 메모, 수정 방향, 제조 기록 등을 적어두세요."></textarea>
+          </label>
         </div>
-        <div class="principles">
-          <article class="principle">
-            <span>01</span>
-            <h3>비영리 정보 제공</h3>
-            <p>향수 원료와 조향 지식의 이해를 돕는 참고 자료로 운영합니다.</p>
-          </article>
-          <article class="principle">
-            <span>02</span>
-            <h3>검증 상태 표시</h3>
-            <p>IFRA, SDS, 알러젠 등 안전 정보는 확인 상태를 명확히 구분합니다.</p>
-          </article>
-          <article class="principle">
-            <span>03</span>
-            <h3>공개 기준 정리</h3>
-            <p>개인 배합 노트나 내부 실무 메모는 공개하지 않고, 원료 식별과 학습에 필요한 기본 정보만 정리합니다.</p>
-          </article>
+        <div class="preset-row">
+          <button id="saveFormulaBtn" class="btn" type="button">현재 처방 저장</button>
+          <button id="exportFormulaBtn" class="btn secondary" type="button">JSON 내보내기</button>
+          <button id="importFormulaBtn" class="btn ghost" type="button">JSON 가져오기</button>
+          <input id="importFile" class="file-input" type="file" accept="application/json,.json" />
         </div>
-      </div>
+
+        <section id="saved" aria-labelledby="saved-title">
+          <h3 id="saved-title">저장 처방</h3>
+          <div id="savedList" class="saved-list"></div>
+        </section>
+      </aside>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="wrap footer-grid">
-      <div>
-        <strong>PERFUMERY.OR.KR</strong><br />
-        한국어 조향 원료 라이브러리 v0.06<br />
-        본 자료는 교육과 참고 목적의 비영리 정보 아카이브 초안입니다. v0.06은 index.html과 assets/materials.json을 분리하고 1,000개 원료 기본 데이터셋을 적용한 구조이며, 실제 제조와 판매 전에는 최신 IFRA, SDS, 알러젠, 관련 법규를 반드시 확인해야 합니다.
+  <div id="modalBackdrop" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal">
+      <div class="modal-head">
+        <div>
+          <span class="eyebrow">Material Detail</span>
+          <h2 id="modalTitle"></h2>
+          <p id="modalSub" class="kor"></p>
+        </div>
+        <button id="modalClose" class="mini-btn" type="button">닫기</button>
       </div>
-      <div class="footer-links">
-        <a href="#library">원료 라이브러리</a>
-        <a href="#glossary">용어사전</a>
-        <a href="#principles">운영 원칙</a>
+      <div id="modalBody" class="detail-grid"></div>
+      <div class="preset-row">
+        <button id="modalAddBtn" class="btn" type="button">작업대에 추가</button>
       </div>
     </div>
-  </footer>
-
-  <div id="modal" class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-    <div class="modal-backdrop" data-close="true"></div>
-    <article class="modal-panel">
-      <header class="modal-head">
-        <div>
-          <span id="modalStatus" class="source-status">CAS 정보 보강</span>
-          <h2 id="modalTitle">원료명</h2>
-          <span id="modalKo" class="ko-name">한글명</span>
-        </div>
-        <button class="close-btn" type="button" aria-label="상세보기 닫기" data-close="true">×</button>
-      </header>
-      <div id="modalBody" class="modal-body"></div>
-    </article>
   </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
   <script>
-    let MATERIALS = [];
-    let MATERIALS_META = {};
-    const DATA_URL = "assets/materials.json";
-    const INITIAL_VISIBLE_LIMIT = 120;
-    const LOAD_MORE_STEP = 120;
-    let searchTimer = null;
+    const DATA_URL = 'assets/materials.json';
+    const DB_NAME = 'perfumery_formula_workspace_v007';
+    const DB_VERSION = 1;
+    const STORE_NAME = 'formulas';
+    const PAGE_SIZE = 120;
 
-    const FAMILY_ORDER = ["Citrus", "Floral", "Woody", "Musk", "Amber", "Green", "Powdery", "Fruity", "Fresh", "Herbal", "Aldehydic", "Gourmand", "Lactonic", "Marine", "Watery", "Ozonic", "Resinous", "Balsamic", "Spicy", "Mossy", "Tobacco", "Leather", "Animalic", "Earthy", "Solar", "Clean", "Transparent", "Tea", "Pine", "Sweet"];
-
-    const state = {
-      query: "",
-      family: "all",
-      note: "all",
-      visibleLimit: INITIAL_VISIBLE_LIMIT
+    const $ = (selector) => document.querySelector(selector);
+    const els = {
+      statTotal: $('#statTotal'),
+      statCasFilled: $('#statCasFilled'),
+      statCasNeed: $('#statCasNeed'),
+      searchInput: $('#searchInput'),
+      resetBtn: $('#resetBtn'),
+      familyFilters: $('#familyFilters'),
+      noteFilter: $('#noteFilter'),
+      casFilter: $('#casFilter'),
+      resultCount: $('#resultCount'),
+      visibleCount: $('#visibleCount'),
+      cards: $('#cards'),
+      loadMoreBtn: $('#loadMoreBtn'),
+      formulaTitle: $('#formulaTitle'),
+      batchAmount: $('#batchAmount'),
+      summaryBox: $('#summaryBox'),
+      solventSummary: $('#solventSummary'),
+      formulaList: $('#formulaList'),
+      formulaNotes: $('#formulaNotes'),
+      saveFormulaBtn: $('#saveFormulaBtn'),
+      exportFormulaBtn: $('#exportFormulaBtn'),
+      importFormulaBtn: $('#importFormulaBtn'),
+      importFile: $('#importFile'),
+      newFormulaBtn: $('#newFormulaBtn'),
+      savedList: $('#savedList'),
+      modalBackdrop: $('#modalBackdrop'),
+      modalTitle: $('#modalTitle'),
+      modalSub: $('#modalSub'),
+      modalBody: $('#modalBody'),
+      modalClose: $('#modalClose'),
+      modalAddBtn: $('#modalAddBtn'),
+      toast: $('#toast')
     };
 
-    const cardsEl = document.getElementById("cards");
-    const emptyEl = document.getElementById("emptyState");
-    const countEl = document.getElementById("resultCount");
-    const libraryStatus = document.getElementById("libraryStatus");
-    const searchInput = document.getElementById("searchInput");
-    const familySelect = document.getElementById("familySelect");
-    const noteSelect = document.getElementById("noteSelect");
-    const chipArea = document.getElementById("chipArea");
-    const statMaterials = document.getElementById("statMaterials");
-    const loadMoreBtn = document.getElementById("loadMoreBtn");
+    const state = {
+      materials: [],
+      meta: {},
+      query: '',
+      family: 'all',
+      note: 'all',
+      cas: 'all',
+      visibleLimit: PAGE_SIZE,
+      currentMaterial: null,
+      formula: freshFormula(),
+      db: null
+    };
 
-    const modal = document.getElementById("modal");
-    const modalTitle = document.getElementById("modalTitle");
-    const modalKo = document.getElementById("modalKo");
-    const modalBody = document.getElementById("modalBody");
-    const modalStatus = document.getElementById("modalStatus");
-
-    function uniqueFamilies() {
-      const set = new Set();
-      MATERIALS.forEach(item => item.family.forEach(f => set.add(f)));
-      return Array.from(set).sort((a, b) => {
-        const ia = FAMILY_ORDER.indexOf(a);
-        const ib = FAMILY_ORDER.indexOf(b);
-        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib) || a.localeCompare(b);
-      });
+    function freshFormula() {
+      return {
+        id: null,
+        title: '',
+        batchAmount: 10,
+        rows: [],
+        notes: '',
+        createdAt: null,
+        updatedAt: null
+      };
     }
 
-    function escapeHtml(text) {
-      return String(text)
-        .replaceAll("&", "&amp;")
-        .replaceAll("<", "&lt;")
-        .replaceAll(">", "&gt;")
-        .replaceAll('"', "&quot;")
-        .replaceAll("'", "&#039;");
+    function normalizeText(value) {
+      return String(value ?? '').toLowerCase().trim();
     }
 
-    function normalize(text) {
-      return String(text).toLowerCase().replace(/\s+/g, " ").trim();
+    function arr(value) {
+      if (Array.isArray(value)) return value;
+      if (!value) return [];
+      return [value];
     }
 
-    function matchesQuery(item, query) {
-      if (!query) return true;
-      const haystack = item._searchText || "";
-      return normalize(query).split(" ").every(part => haystack.includes(part));
+    function fmt(num, digits = 4) {
+      const n = Number(num);
+      if (!Number.isFinite(n)) return '0';
+      const fixed = n.toFixed(digits);
+      return fixed.replace(/\.?(0+)$/, '');
     }
 
-    function filteredMaterials() {
-      return MATERIALS.filter(item => {
-        const familyOk = state.family === "all" || item.family.includes(state.family);
-        const noteOk = state.note === "all" || item.notePosition.includes(state.note);
-        return familyOk && noteOk && matchesQuery(item, state.query);
-      });
+    function fmtGram(num) {
+      const n = Number(num) || 0;
+      if (n >= 100) return `${fmt(n, 2)}g`;
+      if (n >= 10) return `${fmt(n, 3)}g`;
+      return `${fmt(n, 4)}g`;
     }
 
-    function renderFamilyControls() {
-      const families = uniqueFamilies();
-      families.forEach(family => {
-        const option = document.createElement("option");
-        option.value = family;
-        option.textContent = family;
-        familySelect.appendChild(option);
-      });
-
-      const quickFamilies = ["Citrus", "Floral", "Woody", "Musk", "Amber", "Green", "Powdery", "Fruity", "Marine", "Lactonic", "Resinous", "Aldehydic", "Spicy", "Herbal", "Aromatic", "Balsamic", "Gourmand", "Solvent", "Accord"];
-      chipArea.innerHTML = ["all", ...quickFamilies].map(family => {
-        const label = family === "all" ? "전체" : family;
-        return `<button type="button" class="chip ${state.family === family ? "active" : ""}" data-family="${escapeHtml(family)}">${escapeHtml(label)}</button>`;
-      }).join("");
+    function uid() {
+      return `formula_${Date.now()}_${Math.random().toString(16).slice(2)}`;
     }
 
-    function materialCardTemplate(item) {
-      return `
-        <article class="material-card" data-id="${escapeHtml(item.id)}" tabindex="0" role="button" aria-label="${escapeHtml(item.name)} 상세보기">
-          <div class="card-top">
-            <h3>${escapeHtml(item.name)}<span class="ko-name">${escapeHtml(item.koreanName)}</span></h3>
-            <span class="tag">${escapeHtml(item.notePosition.join(" · "))}</span>
-          </div>
-          <div class="odor-list">
-            ${item.family.slice(0, 4).map(f => `<span class="odor">${escapeHtml(f)}</span>`).join("")}
-          </div>
-          <p class="summary">${escapeHtml(item.summary)}</p>
-          <div class="card-data">
-            <div class="mini-data"><span>CAS</span><strong>${escapeHtml(item.cas)}</strong></div>
-            <div class="mini-data"><span>Role</span><strong>${escapeHtml(item.role.slice(0, 2).join(" · "))}</strong></div>
-          </div>
-          <div class="card-footer">
-            <button class="small-link" type="button" data-id="${escapeHtml(item.id)}">상세 정보 보기 →</button>
-            <span class="small-muted">${escapeHtml(item.strength)} strength</span>
-          </div>
-        </article>
-      `;
+    function showToast(message) {
+      els.toast.textContent = message;
+      els.toast.classList.add('show');
+      clearTimeout(showToast.timer);
+      showToast.timer = setTimeout(() => els.toast.classList.remove('show'), 2200);
     }
-
-    function renderCards() {
-      const items = filteredMaterials();
-      const visibleItems = items.slice(0, state.visibleLimit);
-      countEl.textContent = `${items.length}개 검색 결과 중 ${visibleItems.length}개가 표시됩니다.`;
-      statMaterials.textContent = MATERIALS.length;
-      emptyEl.style.display = items.length ? "none" : "block";
-      loadMoreBtn.hidden = visibleItems.length >= items.length;
-      loadMoreBtn.textContent = `더 보기 (${items.length - visibleItems.length}개 남음)`;
-
-      cardsEl.innerHTML = visibleItems.map(materialCardTemplate).join("");
-    }
-
-    function detailList(rows) {
-      return `<dl class="detail-list">${rows.map(([dt, dd]) => `
-        <div class="detail-row"><dt>${escapeHtml(dt)}</dt><dd>${escapeHtml(dd)}</dd></div>
-      `).join("")}</dl>`;
-    }
-
-    function openDetail(id) {
-      const item = MATERIALS.find(m => m.id === id);
-      if (!item) return;
-
-      modalTitle.textContent = item.name;
-      modalKo.textContent = item.koreanName;
-      modalStatus.textContent = item.casStatus === "needs_verification" ? "기본 정보 · CAS 검증 필요" : (item.sourceStatus === "cas-filled" ? "대표 CAS 보강" : "공개 정보 초안");
-
-      modalBody.innerHTML = `
-        <div class="detail-grid">
-          <section class="detail-box">
-            <h3>기본 정보</h3>
-            ${detailList([
-              ["CAS", item.cas],
-              ["분류", item.type.join(" · ")],
-              ["향취 계열", item.family.join(" · ")],
-              ["노트 위치", item.notePosition.join(" · ")]
-            ])}
-          </section>
-          <section class="detail-box">
-            <h3>향취와 조향 역할</h3>
-            ${detailList([
-              ["향취 키워드", item.odorKeywords.join(" · ")],
-              ["조향 역할", item.role.join(" · ")],
-              ["강도", item.strength],
-              ["지속감", item.substantivity]
-            ])}
-          </section>
-        </div>
-
-        <section class="detail-section">
-          <h3>요약</h3>
-          <p>${escapeHtml(item.summary)}</p>
-        </section>
-
-        <section class="detail-section">
-          <h3>함께 보기 좋은 원료</h3>
-          <p>${escapeHtml(item.blendsWith.join(" · "))}</p>
-        </section>
-
-        <section class="detail-section">
-          <h3>관찰 희석 / 안전 메모</h3>
-          <p>${escapeHtml(item.dilutionGuide)} · ${escapeHtml(item.caution)}</p>
-        </section>
-
-        <p class="notice">
-          이 정보는 조향 학습과 공개 참고를 위한 기본 자료입니다. 실제 제품 제조, 판매, 표시 전에는 최신 IFRA, SDS, 알러젠, 화장품 관련 규정을 별도로 확인해야 합니다.
-        </p>
-      `;
-
-      modal.classList.add("is-open");
-      document.body.style.overflow = "hidden";
-    }
-
-    function closeDetail() {
-      modal.classList.remove("is-open");
-      document.body.style.overflow = "";
-    }
-
-    function syncControls() {
-      familySelect.value = state.family;
-      noteSelect.value = state.note;
-      chipArea.querySelectorAll(".chip").forEach(chip => {
-        chip.classList.toggle("active", chip.dataset.family === state.family);
-      });
-    }
-
-    searchInput.addEventListener("input", event => {
-      state.query = event.target.value;
-      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
-      clearTimeout(searchTimer);
-      searchTimer = setTimeout(renderCards, 80);
-    });
-
-    familySelect.addEventListener("change", event => {
-      state.family = event.target.value;
-      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
-      syncControls();
-      renderCards();
-    });
-
-    noteSelect.addEventListener("change", event => {
-      state.note = event.target.value;
-      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
-      renderCards();
-    });
-
-    chipArea.addEventListener("click", event => {
-      const chip = event.target.closest(".chip");
-      if (!chip) return;
-      state.family = chip.dataset.family;
-      state.visibleLimit = INITIAL_VISIBLE_LIMIT;
-      syncControls();
-      renderCards();
-    });
-
-    loadMoreBtn.addEventListener("click", () => {
-      state.visibleLimit += LOAD_MORE_STEP;
-      renderCards();
-    });
-
-    cardsEl.addEventListener("click", event => {
-      const direct = event.target.closest("[data-id]");
-      const card = event.target.closest(".material-card");
-      const id = direct?.dataset.id || card?.dataset.id;
-      if (id) openDetail(id);
-    });
-
-    cardsEl.addEventListener("keydown", event => {
-      if (event.key !== "Enter" && event.key !== " ") return;
-      const card = event.target.closest(".material-card");
-      if (!card) return;
-      event.preventDefault();
-      openDetail(card.dataset.id);
-    });
-
-    modal.addEventListener("click", event => {
-      if (event.target.dataset.close === "true") closeDetail();
-    });
-
-    document.addEventListener("keydown", event => {
-      if (event.key === "Escape" && modal.classList.contains("is-open")) closeDetail();
-    });
 
     async function loadMaterials() {
       try {
-        const response = await fetch(DATA_URL, { cache: "no-store" });
-        if (!response.ok) {
-          throw new Error(`assets/materials.json 요청 실패: ${response.status}`);
-        }
-
-        const payload = await response.json();
-        MATERIALS_META = payload.meta || {};
-        MATERIALS = Array.isArray(payload) ? payload : (payload.materials || []);
-
-        MATERIALS = MATERIALS.map(item => ({
-          ...item,
-          _searchText: normalize([
-            item.name,
-            item.koreanName,
-            item.cas,
-            (item.type || []).join(" "),
-            (item.family || []).join(" "),
-            (item.notePosition || []).join(" "),
-            (item.odorKeywords || []).join(" "),
-            (item.role || []).join(" "),
-            item.summary,
-            item.caution
-          ].join(" "))
-        }));
-
-        if (!Array.isArray(MATERIALS) || MATERIALS.length === 0) {
-          throw new Error("assets/materials.json 안에 원료 데이터가 없습니다.");
-        }
-
-        libraryStatus.innerHTML = `<strong>${escapeHtml(MATERIALS_META.version || "v0.06")}</strong> · ${escapeHtml(MATERIALS.length)}개 원료 데이터를 불러왔습니다. CAS 검증 필요 ${escapeHtml(MATERIALS_META.casNeedsVerificationCount ?? "-")}개 · 데이터 수정은 assets/materials.json에서, 화면과 기능 수정은 index.html에서 관리합니다. 첫 화면은 성능을 위해 일부 카드만 표시합니다.`;
-        renderFamilyControls();
-        renderCards();
+        const res = await fetch(DATA_URL, { cache: 'no-store' });
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const data = await res.json();
+        state.meta = data.meta || {};
+        state.materials = (data.materials || []).map((m, index) => ({ ...m, _index: index }));
+        renderStats();
+        renderFamilyFilters();
+        renderLibrary();
       } catch (error) {
+        els.resultCount.textContent = '원료 데이터를 불러오지 못했습니다. assets/materials.json 경로를 확인하세요.';
         console.error(error);
-        statMaterials.textContent = "0";
-        countEl.textContent = "원료 데이터를 불러오지 못했습니다.";
-        cardsEl.innerHTML = "";
-        emptyEl.style.display = "block";
-        emptyEl.innerHTML = `
-          <strong>materials.json을 불러오지 못했습니다.</strong><br />
-          index.html 옆에 assets 폴더가 있고 그 안에 materials.json이 있는지 확인하세요. 로컬에서 바로 파일을 열면 브라우저 보안 정책 때문에 JSON을 불러오지 못할 수 있으니, 간단한 로컬 서버나 실제 호스팅 환경에서 확인하는 것을 권장합니다.
-        `;
-        libraryStatus.innerHTML = `<strong>데이터 로드 오류</strong> · ${escapeHtml(error.message)}`;
       }
     }
 
-    loadMaterials();
+    function renderStats() {
+      const total = state.materials.length;
+      const filled = state.materials.filter(m => m.casStatus === 'filled' || (m.cas && m.cas !== '검증 필요')).length;
+      const needs = state.materials.filter(m => m.casStatus === 'needs_verification' || m.cas === '검증 필요').length;
+      els.statTotal.textContent = total.toLocaleString('ko-KR');
+      els.statCasFilled.textContent = filled.toLocaleString('ko-KR');
+      els.statCasNeed.textContent = needs.toLocaleString('ko-KR');
+    }
+
+    function renderFamilyFilters() {
+      const counts = new Map();
+      state.materials.forEach(m => arr(m.family).forEach(f => counts.set(f, (counts.get(f) || 0) + 1)));
+      const topFamilies = [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 14);
+      const chips = [`<button class="chip active" data-family="all" type="button">전체</button>`]
+        .concat(topFamilies.map(([family, count]) => `<button class="chip" data-family="${escapeAttr(family)}" type="button">${escapeHtml(family)} ${count}</button>`));
+      els.familyFilters.innerHTML = chips.join('');
+      els.familyFilters.querySelectorAll('.chip').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.family = btn.dataset.family;
+          state.visibleLimit = PAGE_SIZE;
+          els.familyFilters.querySelectorAll('.chip').forEach(b => b.classList.toggle('active', b === btn));
+          renderLibrary();
+        });
+      });
+    }
+
+    function materialSearchBlob(m) {
+      return [
+        m.name, m.koreanName, m.cas, arr(m.type).join(' '), arr(m.family).join(' '),
+        arr(m.notePosition).join(' '), arr(m.odorKeywords).join(' '), arr(m.role).join(' '), m.summary
+      ].map(normalizeText).join(' ');
+    }
+
+    function filteredMaterials() {
+      const q = normalizeText(state.query);
+      return state.materials.filter(m => {
+        const matchQuery = !q || materialSearchBlob(m).includes(q);
+        const matchFamily = state.family === 'all' || arr(m.family).includes(state.family);
+        const matchNote = state.note === 'all' || arr(m.notePosition).includes(state.note);
+        const matchCas = state.cas === 'all' || (state.cas === 'filled'
+          ? (m.casStatus === 'filled' || (m.cas && m.cas !== '검증 필요'))
+          : (m.casStatus === 'needs_verification' || m.cas === '검증 필요'));
+        return matchQuery && matchFamily && matchNote && matchCas;
+      });
+    }
+
+    function renderLibrary() {
+      const items = filteredMaterials();
+      const visible = items.slice(0, state.visibleLimit);
+      els.resultCount.textContent = `검색 결과 ${items.length.toLocaleString('ko-KR')}개`;
+      els.visibleCount.textContent = `현재 ${visible.length.toLocaleString('ko-KR')}개 표시`;
+      els.cards.innerHTML = visible.map(cardTemplate).join('') || `<div class="empty">조건에 맞는 원료가 없습니다.</div>`;
+      els.loadMoreBtn.style.display = items.length > visible.length ? 'inline-flex' : 'none';
+      els.cards.querySelectorAll('[data-open]').forEach(btn => btn.addEventListener('click', () => openMaterial(btn.dataset.open)));
+      els.cards.querySelectorAll('[data-add]').forEach(btn => btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        addMaterialToFormula(btn.dataset.add);
+      }));
+    }
+
+    function cardTemplate(m) {
+      const tags = arr(m.family).slice(0, 4).map(t => `<span class="tag">${escapeHtml(t)}</span>`).join('');
+      const note = arr(m.notePosition).join(' / ') || 'Note 정보 없음';
+      return `<article class="material-card">
+        <div>
+          <h3>${escapeHtml(m.name)}</h3>
+          <div class="kor">${escapeHtml(m.koreanName || '')}</div>
+          <div class="cas">CAS: ${escapeHtml(m.cas || '검증 필요')}</div>
+        </div>
+        <div class="card-tags">${tags}<span class="tag">${escapeHtml(note)}</span></div>
+        <p class="kor">${escapeHtml(m.summary || '')}</p>
+        <div class="card-actions">
+          <button class="mini-btn primary" data-add="${escapeAttr(m.id)}" type="button">+ 작업대</button>
+          <button class="mini-btn" data-open="${escapeAttr(m.id)}" type="button">상세</button>
+        </div>
+      </article>`;
+    }
+
+    function openMaterial(id) {
+      const m = state.materials.find(item => item.id === id);
+      if (!m) return;
+      state.currentMaterial = m;
+      els.modalTitle.textContent = m.name;
+      els.modalSub.textContent = `${m.koreanName || ''} · CAS ${m.cas || '검증 필요'}`;
+      const detailItems = [
+        ['분류', arr(m.type).join(' / ')],
+        ['향취 계열', arr(m.family).join(' / ')],
+        ['노트 위치', arr(m.notePosition).join(' / ')],
+        ['향취 키워드', arr(m.odorKeywords).join(', ')],
+        ['조향 역할', arr(m.role).join(', ')],
+        ['권장 관찰 희석', m.dilutionGuide || '자료 확인 필요'],
+        ['강도 / 지속감', `${m.strength || '-'} / ${m.substantivity || '-'}`],
+        ['데이터 상태', m.verificationLevel || m.sourceStatus || '-'],
+        ['안전 안내', m.caution || '제품 적용 전 최신 자료 확인 필요']
+      ];
+      els.modalBody.innerHTML = detailItems.map(([label, value]) => `<div class="detail-item"><small>${escapeHtml(label)}</small><strong>${escapeHtml(value || '-')}</strong></div>`).join('');
+      els.modalBackdrop.classList.add('open');
+      els.modalAddBtn.focus();
+    }
+
+    function closeModal() {
+      els.modalBackdrop.classList.remove('open');
+    }
+
+    function addMaterialToFormula(id) {
+      const m = state.materials.find(item => item.id === id);
+      if (!m) return;
+      const existing = state.formula.rows.find(row => row.materialId === id);
+      if (existing) {
+        showToast(`${m.name}은 이미 작업대에 있습니다.`);
+        return;
+      }
+      state.formula.rows.push({
+        rowId: `row_${Date.now()}_${Math.random().toString(16).slice(2)}`,
+        materialId: m.id,
+        name: m.name,
+        koreanName: m.koreanName || '',
+        family: arr(m.family),
+        notePosition: arr(m.notePosition),
+        formulaPercent: 0,
+        dilutionPercent: 100,
+        solvent: ''
+      });
+      renderFormula();
+      showToast(`${m.name}을 작업대에 추가했습니다.`);
+      closeModal();
+    }
+
+    function getBatchAmount() {
+      const amount = Number(els.batchAmount.value);
+      return Number.isFinite(amount) && amount > 0 ? amount : 0;
+    }
+
+    function getRowCalc(row) {
+      const batch = getBatchAmount();
+      const formulaPercent = Math.max(0, Number(row.formulaPercent) || 0);
+      const dilutionPercentRaw = row.dilutionPercent === '' || row.dilutionPercent == null ? 100 : Number(row.dilutionPercent);
+      const dilutionPercent = Math.min(100, Math.max(0, Number.isFinite(dilutionPercentRaw) ? dilutionPercentRaw : 100));
+      const totalAmount = batch * formulaPercent / 100;
+      const pureAmount = totalAmount * dilutionPercent / 100;
+      const solventAmount = Math.max(0, totalAmount - pureAmount);
+      return { formulaPercent, dilutionPercent, totalAmount, pureAmount, solventAmount };
+    }
+
+    function formulaSummary() {
+      const rows = state.formula.rows;
+      const sumPercent = rows.reduce((acc, row) => acc + getRowCalc(row).formulaPercent, 0);
+      const totalAmount = rows.reduce((acc, row) => acc + getRowCalc(row).totalAmount, 0);
+      const pureAmount = rows.reduce((acc, row) => acc + getRowCalc(row).pureAmount, 0);
+      const solventAmount = rows.reduce((acc, row) => acc + getRowCalc(row).solventAmount, 0);
+      return { sumPercent, totalAmount, pureAmount, solventAmount };
+    }
+
+    function renderFormula() {
+      state.formula.title = els.formulaTitle.value;
+      state.formula.batchAmount = getBatchAmount();
+      state.formula.notes = els.formulaNotes.value;
+      updateFormulaCalculations();
+
+      if (!state.formula.rows.length) {
+        els.formulaList.innerHTML = `<div class="empty">원료 카드의 “+ 작업대” 버튼을 눌러 처방에 추가하세요.</div>`;
+        return;
+      }
+      els.formulaList.innerHTML = state.formula.rows.map(rowTemplate).join('');
+      bindFormulaRowEvents();
+      updateFormulaCalculations();
+    }
+
+    function updateFormulaCalculations() {
+      const summary = formulaSummary();
+      const statusClass = Math.abs(summary.sumPercent - 100) < 0.0001 ? 'good' : (summary.sumPercent > 100 ? 'danger' : 'warn');
+      const remain = 100 - summary.sumPercent;
+      els.summaryBox.innerHTML = `
+        <div class="metric ${statusClass}"><small>배합비 합계</small><strong>${fmt(summary.sumPercent, 4)}%</strong></div>
+        <div class="metric"><small>제조 기준량</small><strong>${fmtGram(getBatchAmount())}</strong></div>
+        <div class="metric"><small>투입 총량</small><strong>${fmtGram(summary.totalAmount)}</strong></div>
+        <div class="metric"><small>${remain >= 0 ? '남은 비율' : '초과 비율'}</small><strong>${fmt(Math.abs(remain), 4)}%</strong></div>
+        <div class="metric"><small>순원료 합계</small><strong>${fmtGram(summary.pureAmount)}</strong></div>
+        <div class="metric"><small>용매 합계</small><strong>${fmtGram(summary.solventAmount)}</strong></div>
+      `;
+      state.formula.rows.forEach(row => {
+        const calc = getRowCalc(row);
+        const totalEl = document.querySelector(`[data-total="${row.rowId}"]`);
+        const pureEl = document.querySelector(`[data-pure="${row.rowId}"]`);
+        const solventEl = document.querySelector(`[data-solvent="${row.rowId}"]`);
+        const solventNameEl = document.querySelector(`[data-solvent-name="${row.rowId}"]`);
+        if (totalEl) totalEl.textContent = fmtGram(calc.totalAmount);
+        if (pureEl) pureEl.textContent = fmtGram(calc.pureAmount);
+        if (solventEl) solventEl.textContent = fmtGram(calc.solventAmount);
+        if (solventNameEl) solventNameEl.textContent = row.solvent || (calc.solventAmount > 0 ? '용매 미입력' : '-');
+      });
+      renderSolventSummary();
+    }
+
+    function rowTemplate(row) {
+      const calc = getRowCalc(row);
+      const solventName = row.solvent || (calc.solventAmount > 0 ? '용매 미입력' : '-');
+      return `<div class="formula-row" data-row="${escapeAttr(row.rowId)}">
+        <div class="row-head">
+          <div><strong>${escapeHtml(row.name)}</strong><span>${escapeHtml(row.koreanName || '')}</span></div>
+          <button class="mini-btn warn" data-remove="${escapeAttr(row.rowId)}" type="button">삭제</button>
+        </div>
+        <div class="row-inputs">
+          <label>처방 비율 %
+            <input class="input" data-field="formulaPercent" data-row="${escapeAttr(row.rowId)}" type="number" min="0" step="0.001" value="${escapeAttr(row.formulaPercent)}" />
+          </label>
+          <label>희석률 %
+            <input class="input" data-field="dilutionPercent" data-row="${escapeAttr(row.rowId)}" type="number" min="0" max="100" step="0.001" value="${escapeAttr(row.dilutionPercent)}" />
+          </label>
+          <label>사용 용매
+            <input class="input" data-field="solvent" data-row="${escapeAttr(row.rowId)}" type="text" placeholder="예: DPG, EtOH, TEC" value="${escapeAttr(row.solvent)}" />
+          </label>
+          <label>노트 / 계열
+            <input class="input" value="${escapeAttr([...arr(row.notePosition), ...arr(row.family).slice(0,2)].join(' · '))}" readonly />
+          </label>
+        </div>
+        <div class="calc-line">
+          <span>투입량<b data-total="${escapeAttr(row.rowId)}">${fmtGram(calc.totalAmount)}</b></span>
+          <span>순원료<b data-pure="${escapeAttr(row.rowId)}">${fmtGram(calc.pureAmount)}</b></span>
+          <span>용매 <em data-solvent-name="${escapeAttr(row.rowId)}">${escapeHtml(solventName)}</em><b data-solvent="${escapeAttr(row.rowId)}">${fmtGram(calc.solventAmount)}</b></span>
+        </div>
+      </div>`;
+    }
+
+    function bindFormulaRowEvents() {
+      els.formulaList.querySelectorAll('[data-field]').forEach(input => {
+        input.addEventListener('input', () => {
+          const row = state.formula.rows.find(r => r.rowId === input.dataset.row);
+          if (!row) return;
+          let value = input.value;
+          if (input.dataset.field === 'formulaPercent' || input.dataset.field === 'dilutionPercent') value = value === '' ? '' : Number(value);
+          row[input.dataset.field] = value;
+          updateFormulaCalculations();
+        });
+      });
+      els.formulaList.querySelectorAll('[data-remove]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.formula.rows = state.formula.rows.filter(row => row.rowId !== btn.dataset.remove);
+          renderFormula();
+        });
+      });
+    }
+
+    function renderSolventSummary() {
+      const summary = formulaSummary();
+      const map = new Map();
+      state.formula.rows.forEach(row => {
+        const calc = getRowCalc(row);
+        if (calc.solventAmount <= 0) return;
+        const name = (row.solvent || '용매 미입력').trim();
+        map.set(name, (map.get(name) || 0) + calc.solventAmount);
+      });
+      if (!map.size) {
+        els.solventSummary.innerHTML = '';
+        return;
+      }
+      const rows = [...map.entries()].sort((a,b) => b[1] - a[1]).map(([name, amount]) => {
+        const pct = summary.solventAmount > 0 ? amount / summary.solventAmount * 100 : 0;
+        return `<div class="bar-row"><span>${escapeHtml(name)}</span><span class="bar"><i style="width:${Math.min(100, pct)}%"></i></span><span>${fmtGram(amount)}</span></div>`;
+      }).join('');
+      els.solventSummary.innerHTML = `<h3>용매 합계</h3>${rows}`;
+    }
+
+    function hydrateFormulaInputs() {
+      els.formulaTitle.value = state.formula.title || '';
+      els.batchAmount.value = state.formula.batchAmount || 10;
+      els.formulaNotes.value = state.formula.notes || '';
+      updatePresetActive();
+      renderFormula();
+    }
+
+    function updatePresetActive() {
+      document.querySelectorAll('.preset[data-amount]').forEach(btn => {
+        btn.classList.toggle('active', Number(btn.dataset.amount) === Number(els.batchAmount.value));
+      });
+    }
+
+    function serializeCurrentFormula() {
+      return {
+        ...state.formula,
+        title: els.formulaTitle.value.trim() || '무제 처방',
+        batchAmount: getBatchAmount() || 10,
+        notes: els.formulaNotes.value,
+        rows: state.formula.rows.map(row => ({ ...row })),
+        updatedAt: new Date().toISOString()
+      };
+    }
+
+    function initDB() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(STORE_NAME)) {
+            const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+            store.createIndex('updatedAt', 'updatedAt', { unique: false });
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    function txStore(mode = 'readonly') {
+      return state.db.transaction(STORE_NAME, mode).objectStore(STORE_NAME);
+    }
+
+    function saveFormulaToDB(formula) {
+      return new Promise((resolve, reject) => {
+        const store = txStore('readwrite');
+        const req = store.put(formula);
+        req.onsuccess = () => resolve(formula);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function getAllFormulas() {
+      return new Promise((resolve, reject) => {
+        const req = txStore().getAll();
+        req.onsuccess = () => resolve(req.result || []);
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    function deleteFormulaFromDB(id) {
+      return new Promise((resolve, reject) => {
+        const req = txStore('readwrite').delete(id);
+        req.onsuccess = () => resolve();
+        req.onerror = () => reject(req.error);
+      });
+    }
+
+    async function saveCurrentFormula() {
+      let formula = serializeCurrentFormula();
+      if (!formula.id) {
+        formula.id = uid();
+        formula.createdAt = new Date().toISOString();
+      }
+      await saveFormulaToDB(formula);
+      state.formula = formula;
+      hydrateFormulaInputs();
+      await renderSavedList();
+      showToast('현재 처방을 저장했습니다.');
+    }
+
+    async function renderSavedList() {
+      if (!state.db) return;
+      const items = (await getAllFormulas()).sort((a,b) => String(b.updatedAt || '').localeCompare(String(a.updatedAt || '')));
+      if (!items.length) {
+        els.savedList.innerHTML = `<div class="empty">저장된 처방이 없습니다.</div>`;
+        return;
+      }
+      els.savedList.innerHTML = items.map(item => {
+        const date = item.updatedAt ? new Date(item.updatedAt).toLocaleString('ko-KR') : '-';
+        const count = arr(item.rows).length;
+        return `<article class="saved-item">
+          <strong>${escapeHtml(item.title || '무제 처방')}</strong>
+          <small>${fmtGram(item.batchAmount || 0)} · 원료 ${count}개 · ${escapeHtml(date)}</small>
+          <div class="saved-actions">
+            <button class="mini-btn primary" data-load-formula="${escapeAttr(item.id)}" type="button">불러오기</button>
+            <button class="mini-btn" data-copy-formula="${escapeAttr(item.id)}" type="button">복제</button>
+            <button class="mini-btn warn" data-delete-formula="${escapeAttr(item.id)}" type="button">삭제</button>
+          </div>
+        </article>`;
+      }).join('');
+      els.savedList.querySelectorAll('[data-load-formula]').forEach(btn => btn.addEventListener('click', async () => loadSavedFormula(btn.dataset.loadFormula)));
+      els.savedList.querySelectorAll('[data-copy-formula]').forEach(btn => btn.addEventListener('click', async () => copySavedFormula(btn.dataset.copyFormula)));
+      els.savedList.querySelectorAll('[data-delete-formula]').forEach(btn => btn.addEventListener('click', async () => {
+        if (!confirm('저장된 처방을 삭제할까요?')) return;
+        await deleteFormulaFromDB(btn.dataset.deleteFormula);
+        if (state.formula.id === btn.dataset.deleteFormula) state.formula.id = null;
+        await renderSavedList();
+        showToast('처방을 삭제했습니다.');
+      }));
+    }
+
+    async function loadSavedFormula(id) {
+      const items = await getAllFormulas();
+      const formula = items.find(item => item.id === id);
+      if (!formula) return;
+      state.formula = {
+        ...freshFormula(),
+        ...formula,
+        rows: arr(formula.rows).map(row => ({ ...row, rowId: row.rowId || `row_${Date.now()}_${Math.random().toString(16).slice(2)}` }))
+      };
+      hydrateFormulaInputs();
+      showToast('처방을 불러왔습니다.');
+    }
+
+    async function copySavedFormula(id) {
+      const items = await getAllFormulas();
+      const formula = items.find(item => item.id === id);
+      if (!formula) return;
+      const now = new Date().toISOString();
+      const copy = {
+        ...formula,
+        id: uid(),
+        title: `${formula.title || '무제 처방'} 복사본`,
+        rows: arr(formula.rows).map(row => ({ ...row, rowId: `row_${Date.now()}_${Math.random().toString(16).slice(2)}` })),
+        createdAt: now,
+        updatedAt: now
+      };
+      await saveFormulaToDB(copy);
+      await renderSavedList();
+      showToast('처방을 복제했습니다.');
+    }
+
+    function exportFormula() {
+      const formula = serializeCurrentFormula();
+      const blob = new Blob([JSON.stringify(formula, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${(formula.title || 'perfumery-formula').replace(/[\\/:*?"<>|]/g, '_')}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function importFormulaFile(file) {
+      const text = await file.text();
+      const imported = JSON.parse(text);
+      const formula = {
+        ...freshFormula(),
+        ...imported,
+        id: null,
+        title: imported.title ? `${imported.title} 가져오기` : '가져온 처방',
+        rows: arr(imported.rows).map(row => ({ ...row, rowId: `row_${Date.now()}_${Math.random().toString(16).slice(2)}` })),
+        createdAt: null,
+        updatedAt: null
+      };
+      state.formula = formula;
+      hydrateFormulaInputs();
+      showToast('JSON 처방을 가져왔습니다. 저장하려면 현재 처방 저장을 누르세요.');
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function escapeAttr(value) {
+      return escapeHtml(value);
+    }
+
+    function bindEvents() {
+      els.searchInput.addEventListener('input', () => { state.query = els.searchInput.value; state.visibleLimit = PAGE_SIZE; renderLibrary(); });
+      els.resetBtn.addEventListener('click', () => {
+        els.searchInput.value = '';
+        els.noteFilter.value = 'all';
+        els.casFilter.value = 'all';
+        state.query = '';
+        state.note = 'all';
+        state.cas = 'all';
+        state.family = 'all';
+        state.visibleLimit = PAGE_SIZE;
+        els.familyFilters.querySelectorAll('.chip').forEach(btn => btn.classList.toggle('active', btn.dataset.family === 'all'));
+        renderLibrary();
+      });
+      els.noteFilter.addEventListener('change', () => { state.note = els.noteFilter.value; state.visibleLimit = PAGE_SIZE; renderLibrary(); });
+      els.casFilter.addEventListener('change', () => { state.cas = els.casFilter.value; state.visibleLimit = PAGE_SIZE; renderLibrary(); });
+      els.loadMoreBtn.addEventListener('click', () => { state.visibleLimit += PAGE_SIZE; renderLibrary(); });
+      els.modalClose.addEventListener('click', closeModal);
+      els.modalBackdrop.addEventListener('click', (event) => { if (event.target === els.modalBackdrop) closeModal(); });
+      els.modalAddBtn.addEventListener('click', () => { if (state.currentMaterial) addMaterialToFormula(state.currentMaterial.id); });
+      document.addEventListener('keydown', (event) => { if (event.key === 'Escape') closeModal(); });
+
+      els.batchAmount.addEventListener('input', () => { state.formula.batchAmount = getBatchAmount(); updatePresetActive(); updateFormulaCalculations(); });
+      els.formulaTitle.addEventListener('input', () => { state.formula.title = els.formulaTitle.value; });
+      els.formulaNotes.addEventListener('input', () => { state.formula.notes = els.formulaNotes.value; });
+      document.querySelectorAll('.preset[data-amount]').forEach(btn => btn.addEventListener('click', () => {
+        els.batchAmount.value = btn.dataset.amount;
+        state.formula.batchAmount = getBatchAmount();
+        updatePresetActive();
+        renderFormula();
+      }));
+      els.newFormulaBtn.addEventListener('click', () => {
+        if (state.formula.rows.length && !confirm('현재 작업 중인 처방을 비우고 새 처방을 시작할까요? 저장하지 않은 내용은 사라집니다.')) return;
+        state.formula = freshFormula();
+        hydrateFormulaInputs();
+      });
+      els.saveFormulaBtn.addEventListener('click', () => saveCurrentFormula().catch(err => { console.error(err); showToast('저장 중 오류가 발생했습니다.'); }));
+      els.exportFormulaBtn.addEventListener('click', exportFormula);
+      els.importFormulaBtn.addEventListener('click', () => els.importFile.click());
+      els.importFile.addEventListener('change', async () => {
+        const file = els.importFile.files && els.importFile.files[0];
+        if (!file) return;
+        try { await importFormulaFile(file); }
+        catch (err) { console.error(err); showToast('JSON 파일을 읽지 못했습니다.'); }
+        finally { els.importFile.value = ''; }
+      });
+    }
+
+    async function boot() {
+      bindEvents();
+      hydrateFormulaInputs();
+      try {
+        state.db = await initDB();
+        await renderSavedList();
+      } catch (error) {
+        console.error(error);
+        els.savedList.innerHTML = `<div class="empty">IndexedDB를 사용할 수 없습니다. 브라우저 설정을 확인하세요.</div>`;
+      }
+      await loadMaterials();
+    }
+
+    boot();
   </script>
 </body>
 </html>
